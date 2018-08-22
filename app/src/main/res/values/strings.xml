@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Home Assistant Notify</string>
+    <string name="home_assistant_url">Home Assistant URL</string>
+    <string name="api_password">API Password</string>
+    <string name="connect_button">Register</string>
+    <string name="preference_file">HANotify_Preferences</string>
+    <string name="url_suffix">/api/notify.fcm-android</string>
+    <string name="url_callback">/callback</string>
+</resources>
