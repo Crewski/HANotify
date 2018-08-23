@@ -1,5 +1,5 @@
 # HANotify
-Android actionable notifications for Home Assistant
+Android actionable notifications for Home Assistant.
 
 ## Setup
 1.  Copy the fcm-android.py file into your /custom_components/notify/ folder (create it if you don't already have it)
@@ -18,7 +18,7 @@ notify:
 6.  Send some notifications!
 
 ## Usage
-#### Sending the notification
+####Sending the notification
 The android actionable notifications are set up the same as the html5 notifications.  The following parameters can be sent:
 ```
 title -> if not provided, Home Assistant will be used
@@ -36,6 +36,7 @@ In order to send a "regular" notification without actions, all you have to do is
     message: Anne has arrived home
 ```
  This will send a simple push notification without any action buttons.
+ 
  
  If you want to include some actions, something like this will work:
 ```
@@ -66,3 +67,6 @@ The callback is pushed to the event bus.  It can be accessed via fcm_android_not
       entity_id: light.front_door
     service: light.turn_on
 ```
+
+## How it works
+When you clicked register on the app, it sends a firebase token back to Home Assistant.  That token is saved into the fcm-android-registrations.conf file.  This token is what is used to identify what devices to send the notification to.  If the notifications involve actions, the token for the device is included in the callback.  Before the callback is process, the toekn is checked against the fcm-android-registrations.conf file for validity.
