@@ -18,7 +18,7 @@ notify:
 6.  Send some notifications!
 
 ## Usage
-####Sending the notification
+#### Sending the notification
 The android actionable notifications are set up the same as the html5 notifications.  The following parameters can be sent:
 ```
 title -> if not provided, Home Assistant will be used
