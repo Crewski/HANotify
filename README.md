@@ -1,4 +1,4 @@
-# HANotify
+# Home Assistant Notify
 Android actionable notifications for Home Assistant.
 
 ## Setup
