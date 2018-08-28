@@ -31,18 +31,20 @@ _LOGGER = logging.getLogger(__name__)
 REGISTRATIONS_FILE = 'fcm_android_registrations.conf'
 
 
-API_KEY = 'AIzaSyDIGxzoJksF9b2ifmJmkuCzoMnp6YdYcX8'
-API_KEY_HEADER = 'key=' + API_KEY
+SERVER_KEY = 'server_key'
+DEFAULT_SERVER_KEY = 'AIzaSyDIGxzoJksF9b2ifmJmkuCzoMnp6YdYcX8'
 ATTR_TOKEN = 'token'
 FCM_POST_URL = 'https://fcm.googleapis.com/fcm/send'
 
-ATTR_TITLE = 'title'
+
 ATTR_COLOR = 'color'
-
-
 ATTR_ACTION = 'action'
 ATTR_ACTIONS = 'actions'
 ATTR_TYPE = 'type'
+ATTR_NOTIFICATION = 'notification'
+ATTR_MESSAGE_TYPE = 'message_type'
+ATTR_DISMISS = 'dismiss'
+ATTR_TAG = 'tag'
 
 
 
@@ -52,7 +54,6 @@ REGISTER_SCHEMA = vol.Schema({
 
 CALLBACK_EVENT_PAYLOAD_SCHEMA = vol.Schema({
     vol.Required(ATTR_TYPE): vol.In(['clicked']),
-    vol.Required(ATTR_TOKEN): cv.string,
     vol.Optional(ATTR_ACTION): cv.string,
     vol.Optional(ATTR_DATA): dict,
 })
@@ -69,11 +70,14 @@ def get_service(hass, config, discovery_info=None):
     if registrations is None:
         return None
 
+    fcm_server_key = config.get(SERVER_KEY, DEFAULT_SERVER_KEY)
+    fcm_header_key = 'key=' + fcm_server_key
+
     hass.http.register_view(
         FCMAndroidRegistrationView(registrations, json_path))
     hass.http.register_view(FCMAndroidCallbackView(registrations))
 
-    return FCMAndroidNotificationService(registrations, json_path)
+    return FCMAndroidNotificationService(registrations, json_path, fcm_header_key)
 
 
 def _load_config(filename):
@@ -155,7 +159,7 @@ class FCMAndroidRegistrationView(HomeAssistantView):
             data = await request.json()
         except ValueError:
             return self.json_message('Invalid JSON', HTTP_BAD_REQUEST)
-            
+
         token = data.get(ATTR_TOKEN)
 
         found = None
@@ -208,13 +212,13 @@ class FCMAndroidCallbackView(HomeAssistantView):
             if registration.get(ATTR_TOKEN) == data[ATTR_TOKEN]:
                 found = key
                 break
-        
+
         if not found:
             _LOGGER.error('Callback not from registered device')
             return self.json_message('Callback received from invalid device')
 
         event_payload = {
-            ATTR_TYPE: data[ATTR_TYPE],            
+            ATTR_TYPE: data[ATTR_TYPE],
         }
 
         if data[ATTR_ACTION] is not None:
@@ -238,10 +242,11 @@ class FCMAndroidCallbackView(HomeAssistantView):
 class FCMAndroidNotificationService(BaseNotificationService):
     """Implement the notification service for HTML5."""
 
-    def __init__(self, registrations, json_path):
+    def __init__(self, registrations, json_path, fcm_header_key):
         """Initialize the service."""
         self.registrations = registrations
         self.registrations_json_path = json_path
+        self.fcm_header_key = fcm_header_key
 
     @property
     def targets(self):
@@ -252,29 +257,49 @@ class FCMAndroidNotificationService(BaseNotificationService):
         return targets
 
     def send_message(self, message="", **kwargs):
+
+
+        message_type = ATTR_DATA
+
         """Send a message to a user."""
         headers = {
-            'Authorization': API_KEY_HEADER,
+            'Authorization': self.fcm_header_key,
             'Content-Type': 'application/json'
         }
 
         payload = {
-            'data': {
-                'body': message,
-                ATTR_TITLE: kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT),
-                'content_available': False,
-                'color': '#50C0F2',
-                ATTR_ACTIONS: []
-            }
+            ATTR_DATA: {},
+            ATTR_NOTIFICATION: {},
+        }
+
+        msg_payload = {
+            'body': message,
+            ATTR_TITLE: kwargs.get(ATTR_TITLE, ATTR_TITLE_DEFAULT),
+            ATTR_COLOR: '#50C0F2',
         }
 
         data = kwargs.get(ATTR_DATA)
-        
+
         if data is not None:
-            if (data.get(ATTR_ACTIONS)) is not None:
-                payload[ATTR_DATA][ATTR_ACTIONS] = data.get(ATTR_ACTIONS)
+            if data.get(ATTR_MESSAGE_TYPE) is not None and data.get(ATTR_MESSAGE_TYPE) == 'notification':
+                message_type = ATTR_NOTIFICATION
             if data.get(ATTR_COLOR) is not None:
-                payload[ATTR_DATA][ATTR_COLOR] = data.get(ATTR_COLOR)
+                msg_payload[ATTR_COLOR] = data.get(ATTR_COLOR)
+            if data.get(ATTR_ACTIONS) is not None:
+                msg_payload[ATTR_ACTIONS] = data.get(ATTR_ACTIONS)
+                message_type = ATTR_DATA
+            if data.get(ATTR_TAG) is not None:
+                if isinstance(data.get(ATTR_TAG), int):
+                    msg_payload[ATTR_TAG] = data.get(ATTR_TAG)
+                    if data.get(ATTR_DISMISS) is not None:
+                        if isinstance(data.get(ATTR_DISMISS), bool):
+                            msg_payload[ATTR_DISMISS] = data.get(ATTR_DISMISS)
+                        else:
+                            _LOGGER.warning('%s is not a valid boolean, false will be used', data.get(ATTR_DISMISS))
+                else:
+                    _LOGGER.warning('%s is not a valid integer, no tag will be used', data.get(ATTR_TAG))
+
+        payload[message_type] = msg_payload
 
         targets = kwargs.get(ATTR_TARGET)
         target_tmp = []
