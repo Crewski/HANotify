@@ -41,13 +41,14 @@ data:
 | data | Optional | Extra parameters for the notification |
 
 Parameters for the data section of the notification.  Everything here is optional.
+
 | Parameter | Description |
 | --- | --- | 
 | color | A hex color such as #FF0000, default value is a blue |
 | message_type | 'notification' or 'data', defaults to 'data'.  This is the type of FCM that is sent.  Notification has higher priority, but can't include actions or be dismissed by Home Assistant. |
 | tag | Must be an integer.  Tag is the 'id' of the notifications.  Sending a new notification to the same tag will overwrite the current notifcation instead of creating a separate one. |
 | dismiss | true or false, requires a tag parameter.  If true, the notification will be dismissed. |
-| actions | Array of ojects (up to 3) with an 'action' and 'title'.  The title will be the button text on the notification, the action is what is sent back in the callback |
+| actions | Array of objects (up to 3) with an 'action' and 'title'.  The title will be the button text on the notification, the action is what is sent back in the callback |
 
 
 In order to send a "regular" notification without actions, all you have to do is not include them in the call to the service, such as below.
