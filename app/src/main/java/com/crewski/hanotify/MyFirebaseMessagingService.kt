@@ -1,5 +1,6 @@
 package com.crewski.hanotify
 
+import android.app.Notification
 import android.content.Intent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -29,7 +30,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         var title = ""
         var message = ""
         var color = ""
-//        var sensor = ""
+        var tag = (353..37930).random()
         var actions: JSONArray = JSONArray()
 
         val dataJSON = JSONObject(remoteMessage!!.data);
@@ -45,20 +46,33 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (dataJSON.has("color")) {
             color = dataJSON.getString("color")// handler
         }
-//        if (dataJSON.has("sensor")) {
-//            sensor = dataJSON.getString("sensor")// handler
-//        }
         if (dataJSON.has("actions")) {
             actions = JSONArray(dataJSON.getString("actions"))// handler
         }
+        if (dataJSON.has("tag")) {
+            try{
+                tag = dataJSON.getInt("tag")
+            } catch (e: JSONException) {
+                // Oops
+            }
+
+            if (dataJSON.has("dismiss")){
+                try {
+                    if (dataJSON.getBoolean("dismiss") == true){
+                        val notificationManager: NotificationManager = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notificationManager.cancel(tag)
+                        return
+                    }
+                } catch (e: JSONException) {
+                    // Oops
+                }
+
+            }
+        }
 
 
+        sendNotification(message, title, color, actions, tag)
 
-
-        sendNotification(message, title, color, actions)
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
     }
 
     /**
@@ -66,16 +80,16 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
      *
      * @param messageBody FCM message body received.
      */
-    private fun sendNotification(messageBody: String, title: String, color: String, actions: JSONArray) {
+    private fun sendNotification(messageBody: String, title: String, color: String, actions: JSONArray, tag: Int) {
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
-        val notification_id = (353..37930).random()
-        d("Notification_ID", notification_id.toString())
+//        val notification_id = (353..37930).random()
         val channelId = "HomeAssistant"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
                 .setSmallIcon(R.drawable.notification_icon)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(messageBody))
                 .setContentTitle(title)
                 .setContentText(messageBody)
                 .setAutoCancel(true)
@@ -89,8 +103,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     val title = oneObject.getString("title")
                     val action = oneObject.getString("action")
                     val broadcastIntent = Intent(this, ResponseReceiver::class.java)
-//                    broadcastIntent.putExtra("sensor", sensor)
-                    broadcastIntent.putExtra("id", notification_id)
+                    broadcastIntent.putExtra("id", tag)
                     broadcastIntent.putExtra("action", action)
                     val actionIntent = PendingIntent.getBroadcast(this, (353..37930).random(), broadcastIntent, 0)
                     notificationBuilder.addAction(R.drawable.notification_icon, title, actionIntent)
@@ -99,14 +112,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                     // Oops
                 }
         }
-
-
-
-
-
-
-
-
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -118,7 +123,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        notificationManager.notify(notification_id /* ID of notification */, notificationBuilder.build())
+        notificationManager.notify(tag /* ID of notification */, notificationBuilder.build())
     }
 
     fun ClosedRange<Int>.random() =
