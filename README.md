@@ -31,8 +31,6 @@ data:
   message_type
   tag
   dismiss
-  image
-  icon
 
 ```
 
@@ -50,8 +48,7 @@ Parameters for the data section of the notification.  Everything here is optiona
 | tag | Must be an integer.  Tag is the 'id' of the notifications.  Sending a new notification to the same tag will overwrite the current notifcation instead of creating a separate one. |
 | dismiss | true or false, requires a tag parameter.  If true, the notification will be dismissed. |
 | actions | Array of ojects (up to 3) with an 'action' and 'title'.  The title will be the button text on the notification, the action is what is sent back in the callback |
-| image | A URL of an image to send.  The image overwrites the BigTextStyle so longer texts will be truncated.  The image will also be smaller if actions are included |
-| icon | A URL of an icon to use for the notification.  Only on >= SDK 26.  Careful to choose icon with tranparent background to follow Android guidelines.
+
 
 In order to send a "regular" notification without actions, all you have to do is not include them in the call to the service, such as below.
 ```
