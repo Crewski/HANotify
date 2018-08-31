@@ -166,7 +166,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 if (image != null) {
                     notificationBuilder.setStyle(Notification.BigPictureStyle().bigPicture(image).bigLargeIcon(Icon.createWithResource(this, R.drawable.blank_icon)))
                     notificationBuilder.setLargeIcon(image)
-                    notificationBuilder.setSmallIcon(Icon.createWithBitmap(image))
                 }
             }
             if (URLUtil.isValidUrl(icon_url)) {

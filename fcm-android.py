@@ -1,6 +1,11 @@
 """
 FCM Android notification service.
 
+Version: 1.0.0
+
+Changelog:
+1.0.0
+    - begin versioning
 """
 
 import json
