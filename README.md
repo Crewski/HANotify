@@ -39,7 +39,8 @@ data:
 | Parameter | Required | Description |
 | --- | --- | --- |
 | message | Required | Body of the notification |
-| title | Optional | Title for the notification, defaul value: Home Assistant |
+| title | Optional | Title for the notification, default value: Home Assistant |
+| target | Optional | Target notification to be delivered to one specific device |
 | data | Optional | Extra parameters for the notification |
 
 Parameters for the data section of the notification.  Everything here is optional.
